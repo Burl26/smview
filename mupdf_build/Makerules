@@ -1,0 +1,92 @@
+# Configuration for the Makefile
+
+OS := Linux
+
+ifeq ($(findstring -fembed-bitcode,$(XCFLAGS)),)
+  # clang does not support these in combination with -fembed-bitcode
+  CFLAGS += -ffunction-sections -fdata-sections
+endif
+
+SANITIZE_FLAGS += -fsanitize=address
+SANITIZE_FLAGS += -fsanitize=leak
+
+ifeq ($(build),debug)
+  CFLAGS += -pipe -g
+  LDFLAGS += -g $(LDREMOVEUNREACH)
+else ifeq ($(build),release)
+  CFLAGS += -pipe -O2 -DNDEBUG -fomit-frame-pointer
+  LDFLAGS += $(LDREMOVEUNREACH) -Wl,-s
+else ifeq ($(build),small)
+  CFLAGS += -pipe -Os -DNDEBUG -fomit-frame-pointer
+  LDFLAGS += $(LDREMOVEUNREACH) -Wl,-s
+else ifeq ($(build),valgrind)
+  CFLAGS += -pipe -O2 -DNDEBUG -DPACIFY_VALGRIND -fno-omit-frame-pointer
+  LDFLAGS += $(LDREMOVEUNREACH) -Wl,-s
+else ifeq ($(build),sanitize)
+  CFLAGS += -pipe -g -fno-omit-frame-pointer $(SANITIZE_FLAGS)
+  LDFLAGS += -g $(SANITIZE_FLAGS)
+else ifeq ($(build),sanitize-release)
+  CFLAGS += -pipe -O2 -DNDEBUG -fno-omit-frame-pointer $(SANITIZE_FLAGS)
+  LDFLAGS += $(LDREMOVEUNREACH) -Wl,-s $(SANITIZE_FLAGS)
+else ifeq ($(build),profile)
+  CFLAGS += -pipe -O2 -DNDEBUG -pg
+  LDFLAGS += -pg
+else ifeq ($(build),coverage)
+  CFLAGS += -pipe -g -pg -fprofile-arcs -ftest-coverage
+  LIBS += -lgcov
+else ifeq ($(build),native)
+  CFLAGS += -pipe -O2 -DNDEBUG -fomit-frame-pointer -march=native
+  LDFLAGS += $(LDREMOVEUNREACH) -Wl,-s
+else ifeq ($(build),memento)
+  CFLAGS += -pipe -g -DMEMENTO
+  LDFLAGS += -g -d -rdynamic
+  ifneq ($(HAVE_LIBDL),no)
+    CFLAGS += -DHAVE_LIBDL
+    LIBS += -ldl
+  endif
+else ifeq ($(build),gperf)
+  CFLAGS += -pipe -O2 -DNDEBUG -fomit-frame-pointer -DGPERF
+  LIBS += -lprofiler
+else
+  $(error unknown build setting: '$(build)')
+endif
+
+# Default system libraries
+SYS_FREETYPE_LIBS := -lfreetype2
+
+HAVE_OBJCOPY := yes
+
+
+	SYS_FREETYPE_CFLAGS := $(shell pkg-config --cflags freetype2)
+	SYS_FREETYPE_LIBS := $(shell pkg-config --libs freetype2)
+
+  ifeq ($(shell pkg-config --exists lcms2 && echo yes),yes)
+	SYS_LCMS2_CFLAGS := $(shell pkg-config --cflags lcms2)
+	SYS_LCMS2_LIBS := $(shell pkg-config --libs lcms2)
+  endif
+  ifeq ($(shell pkg-config --exists libjpeg && echo yes),yes)
+	SYS_LIBJPEG_CFLAGS := $(shell pkg-config --cflags libjpeg)
+	SYS_LIBJPEG_LIBS := $(shell pkg-config --libs libjpeg)
+  endif
+  ifeq ($(shell pkg-config --exists libopenjp2 && echo yes),yes)
+	SYS_OPENJPEG_CFLAGS := $(shell pkg-config --cflags libopenjp2)
+	SYS_OPENJPEG_LIBS := $(shell pkg-config --libs libopenjp2)
+  endif
+  ifeq ($(shell pkg-config --exists zlib && echo yes),yes)
+	SYS_ZLIB_CFLAGS := $(shell pkg-config --cflags zlib)
+	SYS_ZLIB_LIBS := $(shell pkg-config --libs zlib)
+  endif
+
+  HAVE_X11 := $(shell pkg-config --exists x11 xext && echo yes)
+  ifeq ($(HAVE_X11),yes)
+	X11_CFLAGS := $(shell pkg-config --cflags x11 xext)
+	X11_LIBS := $(shell pkg-config --libs x11 xext)
+  endif
+
+  HAVE_PTHREAD := yes
+  ifeq ($(HAVE_PTHREAD),yes)
+	PTHREAD_CFLAGS :=
+	PTHREAD_LIBS := -lpthread
+  endif
+
+
