@@ -1,0 +1,32 @@
+Building SMVIEW
+
+1. Download and build FLTK.  See README notes in the FLTK subdirectory.
+2. Download and build MUPDF.  See README notes in the mupdf subdirectory.
+3. Include path (-I)
+$FLTK_INSTALL_DIR
+$MUPDF_INSTALL_DIR/include
+4. Library path (-L)
+$FLTK_INSTALL_DIR/lib
+$MUPDF_INSTALL_DIR/build/release
+5. You will need the following libraries (-l)
+fltk
+Xrender
+Xcursor
+Xfixes
+Xext
+Xft
+fontconfig
+Xinerama
+dl
+X11
+mupdf
+mupdf-third
+freetype
+
+Configuring SMVIEW
+1. put the CSV index file in the same directory as the smview executable 
+OR
+smview <path>index.csv
+
+
+

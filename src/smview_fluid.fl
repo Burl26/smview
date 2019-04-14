@@ -1,0 +1,312 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0304
+header_name {.h}
+code_name {.cxx}
+class MainUI {open
+} {
+  Function {MainUI()} {open
+  } {
+    Fl_Window mainWindow {
+      label {smview 1.0}
+      callback {OnClose();} open
+      xywh {114 98 1270 860} type Double
+      code0 {\#include "SM_DB.h"}
+      code1 {\#include <FL/fl_ask.H>} size_range {800 600 0 0} visible
+    } {
+      Fl_Tabs SongList {
+        user_data {'S'} user_data_type {char*}
+        callback {// if Recent is selected, hide the Index menu
+	if (SongList->value() == this->TabRecent) {
+		IndexTab->hide();
+		IndexTab->user_data((void*)('X'));
+	}
+	else {
+		IndexTab->user_data((void*)('I'));
+		IndexTab->show();
+	}} open
+        xywh {55 10 330 845}
+      } {
+        Fl_Group TabArtist {
+          label Artist open
+          xywh {55 50 330 800} color 50
+        } {
+          Fl_Browser ArtistBrowser {
+            callback {// reject the click if there is no user data (i.e. you clicked on the artist)
+	if (ArtistBrowser->data(ArtistBrowser->value()) == NULL) {
+		this->double_clicked = 0;
+		ArtistBrowser->value(last_artist);
+	}
+	else this->last_artist = ArtistBrowser->value();
+	// detect double click
+	if (this->double_clicked > 0) {
+		ShowPDF(ArtistBrowser->data(last_artist));  // show pdf here
+	} else {
+		// start double-click timer
+		this->double_clicked++;
+		Fl::add_timeout(0.25, dbl_click_chk, (void *)&double_clicked);
+	}}
+            xywh {60 50 320 800} type Hold selection_color 175
+          }
+        }
+        Fl_Group TabTitle {
+          label Title open
+          xywh {55 50 330 805} color 50 hide
+        } {
+          Fl_Browser TitleBrowser {
+            callback {// reject the click if there is no user data (i.e. you clicked on the artist)
+	if (TitleBrowser->data(TitleBrowser->value()) == NULL) {
+		this->double_clicked = 0;
+		TitleBrowser->value(last_title);
+	}
+	else this->last_title = TitleBrowser->value();
+	// detect double click
+	if (this->double_clicked > 0) {
+		ShowPDF(TitleBrowser->data(last_title));  // show pdf here
+	} else {
+		// start double-click timer
+		this->double_clicked++;
+		Fl::add_timeout(0.25, dbl_click_chk, (void *)&double_clicked);
+	}}
+            xywh {60 50 320 800} type Hold selection_color 175
+          }
+        }
+        Fl_Group TabRecent {
+          label Recent open
+          xywh {55 45 330 805} color 51 selection_color 50 labelcolor 32 hide
+        } {
+          Fl_Browser RecentBrowser {
+            callback {// reject the click if there is no user data (i.e. you clicked on the artist)
+	if (RecentBrowser->data(RecentBrowser->value()) == NULL) {
+		this->double_clicked = 0;
+		RecentBrowser->value(last_date);
+	}
+	else this->last_date = RecentBrowser->value();
+	// detect double click
+	if (this->double_clicked > 0) {
+		ShowPDF(RecentBrowser->data(last_date));  // show pdf here
+	} else {
+		// start double-click timer
+		this->double_clicked++;
+		Fl::add_timeout(0.25, dbl_click_chk, (void *)&double_clicked);
+	}}
+            xywh {60 50 320 800} type Hold selection_color 175
+          }
+        }
+      }
+      Fl_Button HideButton {
+        user_data {'B'} user_data_type {char*}
+        callback {HideBrowsers()}
+        image {HIDE.xpm} xywh {0 0 31 30}
+      }
+      Fl_Browser IndexTab {
+        user_data {'I'} user_data_type {char*}
+        callback {char c;
+  c = IndexTab->value();
+  if (c == 1) {
+	  StartsWith('\#'); 
+	  return;
+  }
+  StartsWith('A' + c - 2);
+  return;}
+        xywh {5 50 45 805} type Select color 199 selection_color 55
+      }
+      Fl_Box PDFBox {selected
+        xywh {385 4 880 851}
+        code0 {\#include "PDFWindow.h"}
+        code1 {\#include <time.h>}
+        class PDFWindow
+      }
+    }
+  }
+  Function {show()} {open
+  } {
+    code {mainWindow->show(0,NULL);} {}
+  }
+  Function {StartsWith(char c)} {open
+  } {
+    code {DBSTRUCT *d;
+  char ds;
+
+  // if Recent is selected, hide the Index menu
+  if (SongList->value() == this->TabArtist) {
+		// look for first space+artist
+    	for ( int t=1; t<=ArtistBrowser->size(); t++ ) { // index 1 based..!
+    		// look for artist heading
+    		if (NULL == ArtistBrowser->data(t)) {
+    			d = (DBSTRUCT *)(ArtistBrowser->data(t+1));
+  			ds = d->line[d->S_artist];
+  			if ((c == d->line[d->S_artist]) || ((c == '\#') && ((ds >= '0') && (ds <= '9')))) {
+    				// select the song
+    				ArtistBrowser->value(t+1);
+    				this->last_artist = t+1;
+    				// if it is not visible, put it at the top
+    				if (!ArtistBrowser->visible(t)) ArtistBrowser->topline(t);
+    				return;
+    			}
+    		}
+    	}
+  }
+  if (SongList->value() == this->TabTitle) {
+		// look for first space+artist
+    	for ( int t=1; t<=TitleBrowser->size(); t++ ) { // index 1 based..!
+    		// look for artist heading
+    		if (NULL == TitleBrowser->data(t)) return;
+    		d = (DBSTRUCT *)(TitleBrowser->data(t));
+  			ds = d->line[d->S_title];
+  			if ((c == d->line[d->S_title]) || ((c == '\#') && ((ds >= '0') && (ds <= '9')))) {
+    				// select the song
+    				TitleBrowser->value(t);
+    				this->last_title = t;
+    				// if it is not visible, put it at the top
+    				if (!TitleBrowser->visible(t)) TitleBrowser->topline(t);
+    				return;
+			}
+		}
+  }} {}
+  }
+  decl {int last_artist;} {public local
+  }
+  decl {int last_title} {public local
+  }
+  decl {int last_date;} {public local
+  }
+  decl {int double_clicked} {public local
+  }
+  decl {long dbcount;} {public local
+  }
+  decl {DBSTRUCT *db} {public local
+  }
+  Function {init()} {open
+  } {
+    code {long i,j;
+  	char old_artist[256];
+  	char disp_artist[265];
+  	char csverr[1024];
+  	
+  	TitleBrowser->activate();
+  	double_clicked = 0;
+ 	// read the CSV into the database
+  	if (read_csv(&db, &dbcount, csvfile, csverr, 1024)) {
+  		fl_alert("%s",csverr);
+  		exit(-1);	
+  	}
+  	// load browsers
+  	// sort by title, store indexes because array will be blow away by next sort
+  	qsort(db, dbcount, sizeof(DBSTRUCT), sort_title);
+  	for (i=0; i<dbcount; i++) {
+  		if (db[i].title > 0) TitleBrowser->add(&db[i].line[db[i].title], (void *)db[i].index);
+  	}
+  	// sort recent, store indexes because array will be blow away by next sort
+  	qsort(db, dbcount, sizeof(DBSTRUCT), sort_recent);
+  	for (i=(dbcount-1); i>=0; i--) {
+  		if ((db[i].timestamp > 0) && (db[i].title > 0)) RecentBrowser->add(&db[i].line[db[i].title], (void *)db[i].index);
+ 	}
+  	// sort artist.  this is the final sort.  Use this array order
+  	old_artist[0] = 0;
+  	strcpy(disp_artist, "@B180@C255 \\0");
+  	qsort(db, dbcount, sizeof(DBSTRUCT), sort_artist);
+  	for (i=0; i<dbcount; i++) {
+  		if (db[i].S_artist > 0) {
+  			if (strcmp(old_artist, &db[i].line[db[i].S_artist]) != 0) {
+  				strcpy(old_artist, &db[i].line[db[i].S_artist]);
+  				strcpy(&disp_artist[11],&db[i].line[db[i].artist]);
+  				ArtistBrowser->add(disp_artist, NULL);
+  			}
+  			if (db[i].S_title > 0) {
+  				if (db[i].title > 0) ArtistBrowser->add(&db[i].line[db[i].title],(void *)&db[i]);
+  			}
+  		}
+  	}
+	// now go back and reset the data for the other two
+	for (i=1; i<=TitleBrowser->size(); i++) {
+		for (j=0; j<dbcount; j++) {
+			if ((long)TitleBrowser->data(i) == db[j].index) {
+				TitleBrowser->data(i,(void *)&db[j]);
+				break;
+			}
+		}
+	}
+	for (i=1; i<=RecentBrowser->size(); i++) {
+		for (j=0; j<dbcount; j++) {
+			if ((long)RecentBrowser->data(i) == (long)db[j].index) {
+				RecentBrowser->data(i,(void *)&db[j]);
+				break;
+			}
+		}
+	}
+
+	IndexTab->add("@B199@c@b@S24\#");
+	for (i='A'; i<='Z'; i++) {
+		sprintf(disp_artist,"@B199@c@b@S24%c",(char)i);
+		IndexTab->add(disp_artist);
+	}
+	mainWindow->resizable(PDFBox);
+	SongList->value(this->TabTitle);
+	sprintf(disp_artist, "smview - %ld Titles Found", dbcount);
+  	mainWindow->copy_label(disp_artist);
+	PDFBox->initPDF();} {}
+  }
+  Function {ShowPDF(void *v)} {open
+  } {
+    code {DBSTRUCT *d = (DBSTRUCT *)v;
+	time_t timer;
+    char buffer[26];
+    char csverr[64];
+    struct tm* tm_info;
+	int i;
+
+//	PDFBox->label(&d->line[d->pdf]);
+	PDFBox->openPDF(&d->line[d->pdf]);
+	// create timestamp
+    time(&timer);
+    tm_info = localtime(&timer);
+    strftime(buffer, 26, "%Y-%m-%d %H:%M:%S", tm_info);
+
+	// add timestamp to entry
+	strcpy(&d->line[d->timestamp],buffer);
+
+	// get entry in recent browser
+  	for (i=1; i<=RecentBrowser->size(); i++) {
+		if (RecentBrowser->data(i) == d) {
+			// move from current location to top
+			RecentBrowser->move(1,i);
+			break;
+		}
+  	}
+	// if new entry
+	if (i > RecentBrowser->size()) {
+		RecentBrowser->insert(1, &d->line[d->title], (void *)d);
+	}
+	RecentBrowser->select(1,1);
+	// load PDF into box
+	// write CSV back
+	if (write_csv(&db, &dbcount, csvfile, csverr, 64)) {
+		fl_alert("%s", csverr);
+	}} {}
+  }
+  decl {char *csvfile;} {public local
+  }
+  Function {OnClose()} {open
+  } {
+    code {PDFBox->closePDF();
+exit(0);} {}
+  }
+  Function {HideBrowsers()} {open
+  } {
+    code {SongList->hide();
+  IndexTab->hide();
+  HideButton->hide();
+  PDFBox->setFull(1);} {}
+  }
+  Function {redraw()} {open
+  } {
+    code {if ((PDFBox->IS_FULL == 0) && (!HideButton->visible())) {
+  	SongList->show();
+  	HideButton->show();
+  	if (SongList->value() != RecentBrowser) {
+  		IndexTab->show();
+  	}
+  }
+  mainWindow->redraw();} {}
+  }
+}
