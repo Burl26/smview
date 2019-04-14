@@ -5,8 +5,7 @@ Organize your sheet music PDFs by artist or title.  It also keeps track of your 
 The underlying database is a simple csv file that is read and written by the application.
 
 The integrated PDF viewer uses the mupdf engine.  The front-end has been modified to create a continuous vertical scroll over
-multiple pages.  I also stripped out 
-
+multiple pages.  I also stripped out support for linking and other file formats. 
 
 Building the code
 step 1. You will need to download mupdf and build the library - see steps 2 and 3.
