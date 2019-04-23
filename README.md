@@ -26,14 +26,17 @@ step 7. Compile the smview source code.  I used eclipse, but here are the compil
 your own makefile.
 
 Compiler Includes
+```
 -I/yourmudfdirectory/include
 -I/yourFLTKdirectory
-
+```
 Linker
+```
 -L/yourmupdfdirectory/build/release
 -L/yourFLTKdirectory/lib
-
+```
 Libraries
+```
 fltk
 Xrender
 Xcursor
@@ -47,4 +50,4 @@ X11
 mupdf
 mupdf-third
 freetype
-
+```
